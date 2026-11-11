@@ -195,10 +195,10 @@ footer{margin-top:50px;text-align:center;font:500 14px "Segoe UI",system-ui;opac
 <div class="notice" role="note" aria-label="Comunicado oficial">
   <div class="ic" id="noticeIc" aria-hidden="true">!</div>
   <div>
-    <div class="ref">Comunicado oficial · Ref. TR-0001 · Dirección de Reseñas Sanitarias</div>
-    <h2>Aviso a la clientela sobre la conservación de reseñas</h2>
-    <p>Por motivos técnicos ajenos a nuestra voluntad, las reseñas publicadas aún no se almacenan de forma centralizada. Cada reseña vive solo en el dispositivo de quien la escribe, no la verá nadie más y puede desaparecer al recargar la página. Estamos trabajando en ello con el máximo compromiso y una dedicación a medias. Rogamos disculpen las molestias.</p>
-    <div class="sign">Atentamente, la Dirección. Este comunicado no sustituye a un ambientador.</div>
+    <div class="ref">Comunicado oficial · Ref. TR-0002 · Dirección de Reseñas Sanitarias</div>
+    <h2>Aviso a la clientela: las reseñas ya se conservan</h2>
+    <p>Tras una intensa labor de fontanería informática, comunicamos que las reseñas ya se almacenan de forma centralizada y las puede leer todo el mundo, incluido Enrique. La Dirección declina toda responsabilidad por los daños emocionales. Las reseñas ofensivas, repetidas o escritas por un bot serán retiradas con la fregona.</p>
+    <div class="sign">Atentamente, la Dirección. Este comunicado sigue sin sustituir a un ambientador.</div>
   </div>
 </div>
 
@@ -258,12 +258,13 @@ footer{margin-top:50px;text-align:center;font:500 14px "Segoe UI",system-ui;opac
       <div><label for="nick">Tu nombre (o mote)</label><input id="nick" type="text" maxlength="24" placeholder="Anónimo valiente" autocomplete="off"></div>
       <div><label for="msg">Cuéntanos tu experiencia</label><textarea id="msg" maxlength="280" placeholder="Sin detalles gráficos, por favor."></textarea></div>
     </div>
+    <input id="web" name="web" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
     <div class="flushrow">
       <button class="flush" id="flush" type="button">
         <svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M6 10h20"/><path d="M16 10v-4"/><path d="M12 6h8"/><path d="M8 16h16l-2 9a3 3 0 0 1-3 2h-6a3 3 0 0 1-3-2z" fill="rgba(255,255,255,.2)"/></svg>
         Tirar de la cadena
       </button>
-      <span class="flushnote body-txt">Publicar la reseña y que no vuelva a verse en el fondo.</span>
+      <span class="flushnote body-txt">Publicar la reseña para que la vea todo el mundo (y Enrique).</span>
       <span class="err body-txt" id="err" role="alert"></span>
     </div>
   </div>
@@ -367,7 +368,18 @@ Spring.list=new Set();
 const squash=(el,d,ty=0,rot=0)=>{el.style.transform=`translateY(${ty}px) rotate(${rot}deg) scale(${1-d*.55},${1+d})`};
 
 /* ===================== ESTADO ===================== */
-let reviews = JSON.parse(localStorage.getItem(STORE)||"null") || [];
+let reviews = [];
+const SB_URL="https://bcclpptogjdwemiicvao.supabase.co/rest/v1/reviews";
+const SB_KEY="sb_publishable_xK2ZKseXn6WsrfUEhcSu1A_ibe2rbcq";
+const SBH={apikey:SB_KEY,"Content-Type":"application/json"};
+const ago=iso=>{const m=Math.max(0,Math.round((Date.now()-new Date(iso))/60000));if(m<2)return"ahora mismo";if(m<60)return`hace ${m} min`;const h=Math.round(m/60);if(h<24)return`hace ${h} h`;const d=Math.round(h/24);return d===1?"ayer":`hace ${d} días`};
+const fromRow=x=>({n:x.nick,c:x.color,t:x.msg,r:{limp:x.limp,cerr:x.cerr,cist:x.cist,papel:x.papel,vent:x.vent,ambi:x.ambi},stink:x.stink,when:ago(x.created_at)});
+async function loadReviews(){
+  const res=await fetch(SB_URL+"?select=*&order=created_at.desc&limit=100",{headers:SBH});
+  if(!res.ok) throw new Error("HTTP "+res.status);
+  const rows=await res.json(); if(!Array.isArray(rows)) throw new Error("bad");
+  reviews=rows.map(fromRow);
+}
 const all = () => [...reviews, ...CFG.seed];
 const stinkOf = r => r.stink!=null ? r.stink : 5;
 const mean = r => { const v=Object.values(r.r||r); const o=5-stinkOf(r)/2; return (v.reduce((a,b)=>a+b,0)+Math.max(0,o))/(v.length+1) };
@@ -489,7 +501,10 @@ flush.addEventListener("click",()=>{
   if(Object.values(vals).some(v=>!v)){ const m=CFG.cats.find(c=>!vals[c.id]); $("#err").textContent=`Te falta puntuar: ${m.nm.toLowerCase()}. No te escaquees.`; fsp.kick(-14); return; }
   busy=true;
   const nick=$("#nick").value.trim()||"Anónimo valiente";
-  const rev={n:nick,c:COLORS[Math.floor(Math.random()*COLORS.length)],t:$("#msg").value.trim(),r:{...vals},stink:+$("#stinkR").value,when:"ahora mismo"};
+  const last=+(()=>{try{return localStorage.getItem("trono_last")||0}catch(e){return 0}})();
+  if(Date.now()-last<30000){ $("#err").textContent="Calma, que la cadena tarda en recargarse. Espera unos segundos."; fsp.kick(-14); busy=false; return; }
+  if($("#web").value){ toast("¡Reseña publicada! Gracias por tu servicio."); busy=false; return; }
+  const rev={nick:nick.slice(0,24),color:COLORS[Math.floor(Math.random()*COLORS.length)],msg:$("#msg").value.trim().slice(0,280),...vals,stink:+$("#stinkR").value};
   const sw=$("#swirl"), g=$("#swirlG"); sw.style.display="grid";
   const rot=new Spring(0,40,7), sc=new Spring(0,120,14); // rot en vueltas, sc escala
   let rotv=0;
@@ -501,8 +516,15 @@ flush.addEventListener("click",()=>{
     sw.style.background=`rgba(14,90,88,${.55*Math.sin(clamp(t/1.2,0,1)*Math.PI)})`;
     if(t<1.25) requestAnimationFrame(spin); else { sw.style.display="none"; done(); }
   })(t0);
-  function done(){
-    reviews.unshift(rev); localStorage.setItem(STORE,JSON.stringify(reviews));
+  const sent=fetch(SB_URL,{method:"POST",headers:{...SBH,Prefer:"return=minimal"},body:JSON.stringify(rev)}).then(r=>r.ok?{ok:true}:r.json().catch(()=>({})).then(j=>({ok:false,msg:j&&j.message}))).catch(()=>({ok:false}));
+  async function done(){
+    const out=await sent;
+    if(!out.ok){
+      toast(/Demasiadas/.test(out.msg||"")?"El buzón está saturado. Prueba en un minuto.":"No se pudo enviar. Tu reseña sigue aquí, prueba otra vez.");
+      busy=false; return;
+    }
+    try{localStorage.setItem("trono_last",String(Date.now()))}catch(e){}
+    try{await loadReviews()}catch(e){ reviews.unshift(fromRow({...rev,created_at:new Date().toISOString()})) }
     renderReviews(true); refresh();
     Object.keys(vals).forEach(k=>vals[k]=0); buildCats(); stinkTouched=false; $("#stinkR").value=5; $("#stinkLv").textContent="Sin tocar. Mueve el control."; $("#msg").value=""; $("#nick").value="";
     toast("¡Reseña publicada! Gracias por tu servicio."); busy=false;
@@ -569,6 +591,7 @@ nm.addEventListener("pointerenter",()=>nsp.kick(-10)); setTimeout(()=>nsp.kick(-
 
 try{const ic=$("#noticeIc"),isp=new Spring(0,220,8);isp.on=x=>squash(ic,x*.3,0,x*-14);setTimeout(()=>isp.kick(-9),700);ic.addEventListener("pointerenter",()=>isp.kick(-9))}catch(e){}
 buildCats(); renderReviews(); refresh();
+loadReviews().then(()=>{renderReviews();refresh()}).catch(e=>{try{console.warn("reseñas: no se pudo cargar",e)}catch(_){}});
 </script>
 </body>
 </html>
