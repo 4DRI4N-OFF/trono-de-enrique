@@ -90,14 +90,15 @@ h3{font-size:clamp(26px,4vw,38px);letter-spacing:-.01em}
 .roll svg{width:40px;height:48px;overflow:visible;display:block}
 .roll:focus-visible{outline:3px solid var(--teal2);outline-offset:2px;border-radius:12px}
 .roll .on{opacity:0}.roll.full .on{opacity:1}.roll.full .off{opacity:0}
-.who{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
+.who{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:22px}
+.who>*{min-width:0}
 label{display:block;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}
 input[type=text],textarea{
   width:100%;font:500 17px/1.4 "Segoe UI",system-ui,sans-serif;color:var(--ink);background:#fff;
   border:2px solid var(--ink);border-radius:14px;padding:12px 14px;outline:none;resize:vertical;
 }
 input[type=text]:focus,textarea:focus{box-shadow:0 0 0 4px rgba(20,128,124,.35)}
-textarea{min-height:104px;max-height:320px;overflow-y:auto}
+textarea{min-height:104px;max-height:320px;max-width:100%;overflow-y:auto;overflow-wrap:break-word}
 @supports (field-sizing:content){textarea{field-sizing:content}}
 .motion-row{display:flex;justify-content:flex-end;margin-top:16px}
 .motion-toggle{font:700 14px/1.3 "Segoe UI",system-ui,sans-serif;color:var(--teal);background:var(--paper);border:2px solid var(--teal);border-radius:999px;padding:10px 16px;cursor:pointer;min-height:44px}
@@ -185,7 +186,7 @@ footer{margin-top:50px;text-align:center;font:500 14px "Segoe UI",system-ui;opac
   .hero,.stats{grid-template-columns:1fr}
   .cats{grid-template-columns:1fr}
   .cat:nth-last-child(2):nth-child(odd){border-bottom:2px dashed var(--grout)}
-  .who{grid-template-columns:1fr}
+  .who{grid-template-columns:minmax(0,1fr)}
   .rev{grid-template-columns:52px 1fr}
   .avatar{width:52px;height:52px;border-radius:16px;font-size:23px}
   .rev .pts{grid-column:2;text-align:left;display:flex;gap:8px;align-items:baseline}
