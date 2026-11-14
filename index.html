@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>El Trono de Enrique · Reseñas del baño</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.min.js"></script>
 <style>
 :root{
   --tile:#f4efe2; --grout:#d8cfb8; --ink:#1e1b16; --teal:#0e5a58; --teal2:#14807c;
@@ -209,6 +210,40 @@ footer{margin-top:50px;text-align:center;font:500 14px "Segoe UI",system-ui;opac
 .eq i:nth-child(2){animation-duration:.5s;animation-delay:-.2s}.eq i:nth-child(3){animation-duration:.9s;animation-delay:-.4s}
 @keyframes eqb{from{height:3px}to{height:16px}}
 @media (max-width:520px){.radio{right:10px;bottom:10px}.rbtn{font-size:13px;padding:8px 13px 8px 9px}}
+
+/* ---------- ZONA DEL GRUPO (cuentas) ---------- */
+body.locked .priv{display:none!important}
+body:not(.locked) #gate{display:none}
+.lockalt{display:none;text-align:center;padding:22px 8px 4px}
+.lockalt p{font:700 17px/1.4 "Segoe UI",system-ui;color:#fff}
+body.locked .lockalt{display:block}
+#gate{margin-top:46px}
+.gate-card{max-width:520px;margin:0 auto}
+.gate-card h3{margin-bottom:6px}
+.gate-tabs{display:flex;gap:8px;margin:14px 0}
+.gtab{flex:1;padding:10px;border-radius:999px;border:2px solid var(--ink);background:var(--paper);font:inherit;font-size:14px;cursor:pointer;box-shadow:0 3px 0 var(--grout)}
+.gtab[aria-pressed=true]{background:var(--teal);color:#fff;box-shadow:0 3px 0 #083b3a}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;margin-bottom:5px}
+.field input{width:100%;font:500 16px "Segoe UI",system-ui;padding:11px 14px;border-radius:14px;border:2px solid var(--ink);background:#fff}
+.gbtn{width:100%;padding:13px;border-radius:16px;border:2px solid var(--ink);background:var(--coral);color:#fff;font:inherit;font-size:16px;cursor:pointer;box-shadow:0 5px 0 #9f2f1d}
+.gbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #9f2f1d}
+.gbtn:disabled{opacity:.6;cursor:default}
+.gnote{margin-top:12px;font-size:14px;opacity:.8}
+.gerr{color:#b3261e;font-weight:700;margin-top:8px;min-height:1.2em}
+.sess{display:inline-flex;align-items:center;gap:10px;font-size:14px}
+.who-chip{background:var(--teal);color:#fff;border-radius:999px;padding:6px 14px;box-shadow:0 3px 0 #083b3a}
+#gOut{background:var(--paper);border:2px solid var(--ink);border-radius:999px;padding:4px 14px;font:inherit;font-size:12px;cursor:pointer}
+/* fotos en reseñas */
+.photos{margin-top:14px}
+.photos .lab{display:block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;margin-bottom:6px}
+.photolist{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.ph{position:relative;width:86px;height:86px;border-radius:14px;border:2px solid var(--ink);overflow:hidden;background:#fff}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph button{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;border:2px solid var(--ink);background:var(--mustard);font:inherit;font-size:13px;line-height:1;cursor:pointer;padding:0}
+.addph{width:86px;height:86px;border-radius:14px;border:2px dashed var(--ink);background:var(--paper);font:inherit;font-size:28px;cursor:pointer;color:var(--ink)}
+.rev .pgrid{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.rev .pgrid img{width:92px;height:92px;object-fit:cover;border-radius:12px;border:2px solid var(--ink);cursor:pointer;background:#fff}
 </style>
 </head>
 <body>
@@ -232,16 +267,34 @@ footer{margin-top:50px;text-align:center;font:500 14px "Segoe UI",system-ui;opac
   </div>
   <aside class="door" aria-live="polite"><div class="cloudbox" id="clouds"></div>
     <h2>Nota media del baño</h2>
-    <div class="score"><b id="avg">0,0</b><span>/ 10</span></div>
-    <p class="verdict body-txt" id="verdict"></p>
+    <div class="score priv"><b id="avg">0,0</b><span>/ 10</span></div>
+    <p class="verdict body-txt priv" id="verdict"></p>
+    <div class="lockalt"><p>La nota es cosa del grupo.<br>Inicia sesión para verla.</p></div>
     <div class="bolt-row">
       <button class="bolt" id="bolt" aria-pressed="false" aria-label="Cambiar entre ocupado y libre"><span class="knob" id="knob"></span><span class="lab" id="boltLab">OCUPADO</span></button>
-      <span class="nreviews" id="nrev"></span>
+      <span class="nreviews priv" id="nrev"></span>
     </div>
   </aside>
 </header>
 
-<section id="olor">
+<section id="gate">
+  <div class="card gate-card">
+    <h3>Zona del grupo</h3>
+    <p class="body-txt">Las reseñas del baño son patrimonio del grupo. Entra con tu cuenta o créate una: si no estás en la lista, la Dirección (Adrián) tiene que apuntarte.</p>
+    <div class="gate-tabs" role="group" aria-label="Entrar o crear cuenta">
+      <button class="gtab" id="tabIn" type="button" aria-pressed="true">Entrar</button>
+      <button class="gtab" id="tabUp" type="button" aria-pressed="false">Crear cuenta</button>
+    </div>
+    <div class="field" id="fNick" hidden><label for="gNick">Tu mote</label><input id="gNick" type="text" maxlength="24" autocomplete="nickname" placeholder="El de siempre"></div>
+    <div class="field"><label for="gMail">Correo</label><input id="gMail" type="email" autocomplete="email" placeholder="tucorreo@ejemplo.com"></div>
+    <div class="field"><label for="gPass">Contraseña</label><input id="gPass" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"></div>
+    <button class="gbtn" id="gGo" type="button">Entrar</button>
+    <div class="gerr body-txt" id="gateErr" role="alert"></div>
+    <p class="gnote body-txt">Sin spam y sin cosas raras: la cuenta solo sirve para ver y dejar reseñas.</p>
+  </div>
+</section>
+
+<section id="olor" class="priv">
   <div class="cardhead"><h3>El Olfatómetro</h3><span class="body-txt" style="opacity:.7">Medición oficial, tomada con la nariz</span></div>
   <div class="card sniff">
     <svg class="gauge" viewBox="-130 -130 260 170" aria-label="Medidor de olor">
@@ -267,8 +320,8 @@ footer{margin-top:50px;text-align:center;font:500 14px "Segoe UI",system-ui;opac
   </div>
 </section>
 
-<section id="rate">
-  <div class="cardhead"><h3>Deja tu reseña</h3><span class="body-txt" style="opacity:.7">Un rollo es lo peor. Cinco rollos, matrícula de honor.</span></div>
+<section id="rate" class="priv">
+  <div class="cardhead"><h3>Deja tu reseña</h3><span class="body-txt" style="opacity:.7">Un rollo es lo peor. Cinco rollos, matrícula de honor.</span><span class="sess" id="sess" hidden><span class="who-chip body-txt" id="sessNick"></span><button id="gOut" type="button">Salir</button></span></div>
   <div class="card">
     <div class="cats" id="cats"></div>
     <div class="stink">
@@ -280,19 +333,26 @@ footer{margin-top:50px;text-align:center;font:500 14px "Segoe UI",system-ui;opac
       <div><label for="nick">Tu nombre (o mote)</label><input id="nick" type="text" maxlength="24" placeholder="Anónimo valiente" autocomplete="off"></div>
       <div><label for="msg">Cuéntanos tu experiencia</label><textarea id="msg" maxlength="280" placeholder="Sin detalles gráficos, por favor."></textarea></div>
     </div>
+    <div class="photos">
+      <span class="lab">Fotos de la visita (opcional, máximo 5)</span>
+      <div class="photolist" id="phList">
+        <button class="addph" id="phAdd" type="button" aria-label="Añadir foto">+</button>
+      </div>
+      <input id="phInput" type="file" accept="image/*" multiple hidden>
+    </div>
     <input id="web" name="web" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
     <div class="flushrow">
       <button class="flush" id="flush" type="button">
         <svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M6 10h20"/><path d="M16 10v-4"/><path d="M12 6h8"/><path d="M8 16h16l-2 9a3 3 0 0 1-3 2h-6a3 3 0 0 1-3-2z" fill="rgba(255,255,255,.2)"/></svg>
         Tirar de la cadena
       </button>
-      <span class="flushnote body-txt">Publicar la reseña para que la vea todo el mundo (y Enrique).</span>
+      <span class="flushnote body-txt">Publicar la reseña para que la vea el grupo (y Enrique).</span>
       <span class="err body-txt" id="err" role="alert"></span>
     </div>
   </div>
 </section>
 
-<section>
+<section class="priv">
   <div class="cardhead"><h3>Lo que dice la gente</h3><span class="body-txt" style="opacity:.7" id="revcount"></span></div>
   <div class="reviews" id="reviews"></div>
 </section>
@@ -307,7 +367,7 @@ footer{margin-top:50px;text-align:center;font:500 14px "Segoe UI",system-ui;opac
   </div>
 </section>
 
-<section>
+<section class="priv">
   <div class="cardhead"><h3>Análisis del trono</h3></div>
   <div class="stats">
     <div class="card"><div class="bars" id="bars"></div></div>
@@ -404,16 +464,31 @@ const squash=(el,d,ty=0,rot=0)=>{el.style.transform=`translateY(${ty}px) rotate(
 
 /* ===================== ESTADO ===================== */
 let reviews = [];
-const SB_URL="https://bcclpptogjdwemiicvao.supabase.co/rest/v1/reviews";
+/* Backend Supabase: solo URL + clave pública (la protección real está en las políticas RLS del servidor,
+   no en la clave). Si la web se muda a otro hosting, basta servir este mismo archivo.
+   Si el backend cambia algún día, se tocan estas dos líneas y las políticas van en /supabase. */
+const SB_URL="https://bcclpptogjdwemiicvao.supabase.co";
 const SB_KEY="sb_publishable_xK2ZKseXn6WsrfUEhcSu1A_ibe2rbcq";
-const SBH={apikey:SB_KEY,"Content-Type":"application/json"};
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
 const ago=iso=>{const m=Math.max(0,Math.round((Date.now()-new Date(iso))/60000));if(m<2)return"ahora mismo";if(m<60)return`hace ${m} min`;const h=Math.round(m/60);if(h<24)return`hace ${h} h`;const d=Math.round(h/24);return d===1?"ayer":`hace ${d} días`};
-const fromRow=x=>({n:x.nick,c:x.color,t:x.msg,r:{limp:x.limp,cerr:x.cerr,cist:x.cist,papel:x.papel,vent:x.vent,ambi:x.ambi},stink:x.stink,when:ago(x.created_at)});
+const fromRow=x=>({n:x.nick,c:x.color,t:x.msg,r:{limp:x.limp,cerr:x.cerr,cist:x.cist,papel:x.papel,vent:x.vent,ambi:x.ambi},stink:x.stink,when:ago(x.created_at),photos:(x.review_photos||[]).slice().sort((a,b)=>a.position-b.position).map(p=>p.path)});
 async function loadReviews(){
-  const res=await fetch(SB_URL+"?select=*&order=created_at.desc&limit=100",{headers:SBH});
-  if(!res.ok) throw new Error("HTTP "+res.status);
-  const rows=await res.json(); if(!Array.isArray(rows)) throw new Error("bad");
-  reviews=rows.map(fromRow);
+  const {data,error}=await sb.from("reviews").select("*,review_photos(path,position)").order("created_at",{ascending:false}).limit(100);
+  if(error) throw new Error(error.message||"bad");
+  reviews=(data||[]).map(fromRow);
+}
+/* URLs firmadas temporales (1 h) para ver las fotos: sin sesión del grupo no se generan */
+async function fillPhotos(grid,paths){
+  try{
+    const {data,error}=await sb.storage.from("review-photos").createSignedUrls(paths,3600);
+    if(error||!data) return;
+    data.forEach(u=>{
+      if(!u||!u.signedUrl) return;
+      const im=document.createElement("img"); im.src=u.signedUrl; im.alt="Foto adjunta a la reseña"; im.loading="lazy";
+      im.addEventListener("click",()=>window.open(u.signedUrl,"_blank","noopener"));
+      grid.appendChild(im);
+    });
+  }catch(e){}
 }
 const all = () => [...reviews, ...CFG.seed];
 const stinkOf = r => r.stink!=null ? r.stink : 5;
@@ -512,15 +587,104 @@ function reviewEl(r,isNew){
   const s=to10(mean(r)); const d=document.createElement("article");
   d.className="card rev"+(isNew?" new":"");
   d.innerHTML=`<div class="avatar" style="background:${r.c}">${initials(r.n)}</div>
-    <div><div class="top"><strong></strong><small>${r.when||"hace un rato"}</small></div><p class="body-txt"></p><div class="tags"></div></div>
+    <div class="revbody"><div class="top"><strong></strong><small>${r.when||"hace un rato"}</small></div><p class="body-txt"></p><div class="tags"></div><div class="pgrid"></div></div>
     <div class="pts">${fmt(s)}<small>/ 10</small></div>`;
   d.querySelector("strong").textContent=r.n; d.querySelector("p").textContent=r.t||"(Sin comentarios. El silencio lo dice todo.)";
   const tg=d.querySelector(".tags"); (r.tags||tagsFor(r)).forEach(x=>{const e=document.createElement("span");e.className="tag";e.textContent=x;tg.appendChild(e)});
+  if(r.photos&&r.photos.length) fillPhotos(d.querySelector(".pgrid"),r.photos);
   return d;
 }
 function renderReviews(newest){
   const box=$("#reviews"); box.innerHTML="";
   all().forEach((r,i)=>{const e=reviewEl(r,newest&&i===0); box.appendChild(e); if(newest&&i===0){const sp=new Spring(-1,200,12);sp.on=x=>{e.style.transform=`translateY(${x*-38}px) scale(${1-Math.abs(x)*.04},${1+Math.abs(x)*.04})`;e.style.opacity=clamp(1-x,0,1)};sp.to(0)} });
+}
+
+/* ===================== CUENTAS (zona del grupo) ===================== */
+let session=null, member=false;
+let authMode="in";
+const tabIn=$("#tabIn"), tabUp=$("#tabUp"), fNick=$("#fNick"), gGo=$("#gGo"), gErr=$("#gateErr");
+function setMode(m){
+  authMode=m; tabIn.setAttribute("aria-pressed",m==="in"); tabUp.setAttribute("aria-pressed",m==="up");
+  fNick.hidden=(m==="in"); gGo.textContent=m==="in"?"Entrar":"Crear cuenta"; gErr.textContent="";
+  $("#gPass").setAttribute("autocomplete",m==="in"?"current-password":"new-password");
+}
+tabIn.addEventListener("click",()=>setMode("in"));
+tabUp.addEventListener("click",()=>setMode("up"));
+gGo.addEventListener("click",async()=>{
+  const email=$("#gMail").value.trim(), pass=$("#gPass").value;
+  if(!email||!pass){ gErr.textContent="Falta el correo o la contraseña."; return; }
+  gGo.disabled=true;
+  try{
+    if(authMode==="in"){
+      const {error}=await sb.auth.signInWithPassword({email,password:pass});
+      if(error) gErr.textContent="No entra. Revisa el correo y la contraseña.";
+    }else{
+      if(pass.length<6){ gErr.textContent="La contraseña necesita al menos 6 caracteres."; gGo.disabled=false; return; }
+      const nick=$("#gNick").value.trim();
+      const {data,error}=await sb.auth.signUp({email,password:pass,options:{data:{nick:nick||email.split("@")[0]}}});
+      if(error) gErr.textContent=/already|registered/i.test(error.message||"")?"Ese correo ya tiene cuenta. Prueba a entrar.":"No se pudo crear la cuenta. Prueba otra vez.";
+      else if(!data.session) gErr.textContent="Cuenta creada. Revisa tu correo: hay que confirmarla antes de entrar.";
+    }
+  }catch(e){ gErr.textContent="Fallo de conexión. Prueba otra vez."; }
+  gGo.disabled=false;
+});
+["#gMail","#gPass","#gNick"].forEach(sel=>$(sel).addEventListener("keydown",e=>{if(e.key==="Enter")gGo.click()}));
+$("#gOut").addEventListener("click",async()=>{ await sb.auth.signOut(); });
+async function refreshGate(){
+  const {data}=await sb.auth.getSession(); session=data?data.session:null;
+  member=false;
+  if(session){ try{ const r=await sb.rpc("es_del_grupo"); member=!!r.data }catch(e){} }
+  const open=!!(session&&member);
+  document.body.classList.toggle("locked",!open);
+  const chip=$("#sess"); chip.hidden=!session;
+  if(session){
+    const nk=(session.user.user_metadata&&session.user.user_metadata.nick)||session.user.email;
+    $("#sessNick").textContent=nk;
+    const nickEl=$("#nick"); if(nickEl&&!nickEl.value) nickEl.value=String(nk).slice(0,24);
+  }
+  if(session&&!member) gErr.textContent="Tu cuenta va bien, pero no estás en la lista del grupo. Pídele a Adrián que te apunte.";
+  return open;
+}
+sb.auth.onAuthStateChange(()=>{ refreshGate().then(bootData); });
+
+/* ===================== FOTOS (máx 5 por reseña) ===================== */
+const picked=[];
+const phInput=$("#phInput"), phList=$("#phList"), phAdd=$("#phAdd");
+function renderPicked(){
+  phList.querySelectorAll(".ph").forEach(e=>e.remove());
+  picked.forEach((p,i)=>{
+    const d=document.createElement("div"); d.className="ph";
+    const im=document.createElement("img"); im.src=p.url; im.alt="Foto "+(i+1);
+    const x=document.createElement("button"); x.type="button"; x.textContent="×"; x.setAttribute("aria-label","Quitar foto "+(i+1));
+    x.addEventListener("click",()=>{ URL.revokeObjectURL(p.url); picked.splice(i,1); renderPicked(); });
+    d.append(im,x); phList.insertBefore(d,phAdd);
+  });
+  phAdd.hidden=picked.length>=5;
+}
+phAdd.addEventListener("click",()=>phInput.click());
+phInput.addEventListener("change",()=>{
+  for(const f of phInput.files){
+    if(picked.length>=5) break;
+    if(!f.type.startsWith("image/")){ $("#err").textContent="Solo valen fotos."; continue; }
+    if(f.size>10*1024*1024){ $("#err").textContent="Esa foto pesa demasiado (máx 10 MB)."; continue; }
+    picked.push({file:f,url:URL.createObjectURL(f)});
+  }
+  phInput.value=""; renderPicked();
+});
+/* Comprime en el navegador: máx 1600 px y JPEG ~0.82 (si no se puede, sube el original si es < 1,9 MB) */
+async function prep(file){
+  if(file.type==="image/gif"){ if(file.size>1900000) throw new Error("big"); return {blob:file,ext:"gif"}; }
+  try{
+    const bmp=await createImageBitmap(file);
+    const M=1600, k=Math.min(1,M/Math.max(bmp.width,bmp.height));
+    const cv=document.createElement("canvas"); cv.width=Math.max(1,Math.round(bmp.width*k)); cv.height=Math.max(1,Math.round(bmp.height*k));
+    cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height); bmp.close&&bmp.close();
+    const blob=await new Promise(r=>cv.toBlob(r,"image/jpeg",.82));
+    if(blob&&blob.size<file.size) return {blob,ext:"jpg"};
+  }catch(e){}
+  if(file.size>1900000) throw new Error("big");
+  const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+  return {blob:file,ext};
 }
 
 /* ===================== TIRAR DE LA CADENA ===================== */
@@ -532,6 +696,7 @@ flush.addEventListener("pointerdown",()=>fsp.to(.9));
 let busy=false;
 flush.addEventListener("click",()=>{
   if(busy) return;
+  if(!session||!member){ toast("Zona del grupo: inicia sesión para publicar."); return; }
   if(!stinkTouched){ $("#err").textContent="Falta el Olfatómetro. Es lo único que importa aquí."; fsp.kick(-14); $("#stinkR").focus(); return; }
   if(Object.values(vals).some(v=>!v)){ const m=CFG.cats.find(c=>!vals[c.id]); $("#err").textContent=`Te falta puntuar: ${m.nm.toLowerCase()}. No te escaquees.`; fsp.kick(-14); return; }
   busy=true;
@@ -551,17 +716,34 @@ flush.addEventListener("click",()=>{
     sw.style.background=`rgba(14,90,88,${.55*Math.sin(clamp(t/1.2,0,1)*Math.PI)})`;
     if(t<1.25) requestAnimationFrame(spin); else { sw.style.display="none"; done(); }
   })(t0);
-  const sent=fetch(SB_URL,{method:"POST",headers:{...SBH,Prefer:"return=minimal"},body:JSON.stringify(rev)}).then(r=>r.ok?{ok:true}:r.json().catch(()=>({})).then(j=>({ok:false,msg:j&&j.message}))).catch(()=>({ok:false}));
+  const sent=(async()=>{
+    try{
+      const {data:ins,error:e1}=await sb.from("reviews").insert(rev).select("id").single();
+      if(e1) return {ok:false,msg:e1.message};
+      for(let i=0;i<picked.length;i++){
+        let pf; try{ pf=await prep(picked[i].file); }catch(err){ return {ok:false,reviewDone:true,msg:"big"}; }
+        const path=ins.id+"/"+i+"."+pf.ext;
+        const {error:e2}=await sb.storage.from("review-photos").upload(path,pf.blob,{contentType:pf.blob.type||"image/jpeg"});
+        if(e2) return {ok:false,reviewDone:true,msg:e2.message};
+        const {error:e3}=await sb.from("review_photos").insert({review_id:ins.id,path,position:i});
+        if(e3) return {ok:false,reviewDone:true,msg:e3.message};
+      }
+      return {ok:true};
+    }catch(err){ return {ok:false}; }
+  })();
   async function done(){
     const out=await sent;
     if(!out.ok){
-      toast(/Demasiadas/.test(out.msg||"")?"El buzón está saturado. Prueba en un minuto.":"No se pudo enviar. Tu reseña sigue aquí, prueba otra vez.");
+      if(out.reviewDone){ toast("La reseña se publicó, pero las fotos se han atascado. Nada grave: la Dirección lo mira."); }
+      else toast(/Demasiadas/.test(out.msg||"")?"El buzón está saturado. Prueba en un minuto.":"No se pudo enviar. Tu reseña sigue aquí, prueba otra vez.");
+      if(out.reviewDone){ try{await loadReviews()}catch(e){} renderReviews(true); refresh(); }
       busy=false; return;
     }
     try{localStorage.setItem("trono_last",String(Date.now()))}catch(e){}
-    try{await loadReviews()}catch(e){ reviews.unshift(fromRow({...rev,created_at:new Date().toISOString()})) }
+    try{await loadReviews()}catch(e){ reviews.unshift({...fromRow({...rev,created_at:new Date().toISOString()}),photos:[]}) }
     renderReviews(true); refresh();
     Object.keys(vals).forEach(k=>vals[k]=0); buildCats(); stinkTouched=false; $("#stinkR").value=5; $("#stinkLv").textContent="Sin tocar. Mueve el control."; $("#msg").value=""; $("#nick").value="";
+    picked.forEach(p=>URL.revokeObjectURL(p.url)); picked.length=0; renderPicked();
     toast("¡Reseña publicada! Gracias por tu servicio."); busy=false;
     $("#reviews").scrollIntoView({behavior:"smooth",block:"start"});
   }
@@ -625,8 +807,12 @@ nsp.on=x=>squash(nm,x*.3,0,x*-5);
 nm.addEventListener("pointerenter",()=>nsp.kick(-10)); setTimeout(()=>nsp.kick(-8),500);
 
 try{const ic=$("#noticeIc"),isp=new Spring(0,220,8);isp.on=x=>squash(ic,x*.3,0,x*-14);setTimeout(()=>isp.kick(-9),700);ic.addEventListener("pointerenter",()=>isp.kick(-9))}catch(e){}
-buildCats(); renderReviews(); refresh();
-loadReviews().then(()=>{renderReviews();refresh()}).catch(e=>{try{console.warn("reseñas: no se pudo cargar",e)}catch(_){}});
+buildCats();
+async function bootData(){
+  if(member){ try{ await loadReviews(); }catch(e){ try{console.warn("reseñas: no se pudo cargar",e)}catch(_){}} }
+  renderReviews(); refresh();
+}
+refreshGate().then(bootData);
 
 /* ===================== RADIO (vídeo de YouTube incrustado: no se aloja ningún audio) ===================== */
 const YT_ID="ap5MzFogck8", RADIO_VOL=20;
