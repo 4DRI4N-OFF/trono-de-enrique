@@ -253,8 +253,8 @@ body.locked .lockalt{display:block}
   <div class="ic" id="noticeIc" aria-hidden="true">!</div>
   <div>
     <div class="ref">Comunicado oficial · Ref. TR-0002 · Dirección de Reseñas Sanitarias</div>
-    <h2>Aviso a la clientela: las reseñas ya se conservan</h2>
-    <p>Tras una intensa labor de fontanería informática, comunicamos que las reseñas ya se almacenan de forma centralizada y las puede leer todo el mundo, incluido Enrique. La Dirección declina toda responsabilidad por los daños emocionales. Las reseñas ofensivas, repetidas o escritas por un bot serán retiradas con la fregona.</p>
+    <h2>Aviso a la clientela: las reseñas son cosa del grupo</h2>
+    <p>Tras una intensa labor de fontanería informática, comunicamos que las reseñas ya se almacenan de forma centralizada y solo las lee el grupo, con su cuenta, incluido Enrique. La Dirección declina toda responsabilidad por los daños emocionales. Las reseñas ofensivas, repetidas o escritas por un bot serán retiradas con la fregona.</p>
     <div class="sign">Atentamente, la Dirección. Este comunicado sigue sin sustituir a un ambientador.</div>
   </div>
 </div>
@@ -477,18 +477,18 @@ async function loadReviews(){
   if(error) throw new Error(error.message||"bad");
   reviews=(data||[]).map(fromRow);
 }
-/* URLs firmadas temporales (1 h) para ver las fotos: sin sesión del grupo no se generan */
+/* Descarga autenticada de las fotos: solo con la sesión del grupo; no hay URL compartible */
 async function fillPhotos(grid,paths){
-  try{
-    const {data,error}=await sb.storage.from("review-photos").createSignedUrls(paths,3600);
-    if(error||!data) return;
-    data.forEach(u=>{
-      if(!u||!u.signedUrl) return;
-      const im=document.createElement("img"); im.src=u.signedUrl; im.alt="Foto adjunta a la reseña"; im.loading="lazy";
-      im.addEventListener("click",()=>window.open(u.signedUrl,"_blank","noopener"));
+  for(const p of paths){
+    try{
+      const {data,error}=await sb.storage.from("review-photos").download(p);
+      if(error||!data) continue;
+      const url=URL.createObjectURL(data);
+      const im=document.createElement("img"); im.src=url; im.alt="Foto adjunta a la reseña"; im.loading="lazy";
+      im.addEventListener("click",()=>window.open(url,"_blank","noopener"));
       grid.appendChild(im);
-    });
-  }catch(e){}
+    }catch(e){}
+  }
 }
 const all = () => [...reviews, ...CFG.seed];
 const stinkOf = r => r.stink!=null ? r.stink : 5;
