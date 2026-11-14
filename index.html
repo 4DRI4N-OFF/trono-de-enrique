@@ -92,14 +92,24 @@ h3{font-size:clamp(26px,4vw,38px);letter-spacing:-.01em}
 .roll svg{width:40px;height:48px;overflow:visible;display:block}
 .roll:focus-visible{outline:3px solid var(--teal2);outline-offset:2px;border-radius:12px}
 .roll .on{opacity:0}.roll.full .on{opacity:1}.roll.full .off{opacity:0}
-.who{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
+.who{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:22px}
+.who>*{min-width:0}
 label{display:block;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}
 input[type=text],textarea{
   width:100%;font:500 17px/1.4 "Segoe UI",system-ui,sans-serif;color:var(--ink);background:#fff;
   border:2px solid var(--ink);border-radius:14px;padding:12px 14px;outline:none;resize:vertical;
 }
 input[type=text]:focus,textarea:focus{box-shadow:0 0 0 4px rgba(20,128,124,.35)}
-textarea{min-height:104px}
+textarea{min-height:104px;max-height:320px;max-width:100%;overflow-y:auto;overflow-wrap:break-word}
+@supports (field-sizing:content){textarea{field-sizing:content}}
+.motion-row{display:flex;justify-content:flex-end;margin-top:16px}
+.motion-toggle{font:700 14px/1.3 "Segoe UI",system-ui,sans-serif;color:var(--teal);background:var(--paper);border:2px solid var(--teal);border-radius:999px;padding:10px 16px;cursor:pointer;min-height:44px}
+.motion-toggle:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+.motion-toggle:disabled{cursor:default;opacity:1}
+html.motion-reduced *,html.motion-reduced *::before,html.motion-reduced *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
 .flushrow{display:flex;align-items:center;gap:18px;margin-top:20px;flex-wrap:wrap}
 .flush{
   position:relative;display:inline-flex;align-items:center;gap:14px;border:0;cursor:pointer;font:inherit;font-size:19px;color:#fff;
@@ -178,7 +188,7 @@ footer{margin-top:50px;text-align:center;font:500 14px "Segoe UI",system-ui;opac
   .hero,.stats{grid-template-columns:1fr}
   .cats{grid-template-columns:1fr}
   .cat:nth-last-child(2):nth-child(odd){border-bottom:2px dashed var(--grout)}
-  .who{grid-template-columns:1fr}
+  .who{grid-template-columns:minmax(0,1fr)}
   .rev{grid-template-columns:52px 1fr}
   .avatar{width:52px;height:52px;border-radius:16px;font-size:23px}
   .rev .pts{grid-column:2;text-align:left;display:flex;gap:8px;align-items:baseline}
@@ -258,6 +268,10 @@ body.locked .lockalt{display:block}
     <p>Tras una intensa labor de fontanería informática, comunicamos que las reseñas ya se almacenan de forma centralizada y solo las lee el grupo, con su cuenta, incluido Enrique. La Dirección declina toda responsabilidad por los daños emocionales. Las reseñas ofensivas, repetidas o escritas por un bot serán retiradas con la fregona.</p>
     <div class="sign">Atentamente, la Dirección. Este comunicado sigue sin sustituir a un ambientador.</div>
   </div>
+</div>
+
+<div class="motion-row">
+  <button class="motion-toggle" id="motionToggle" type="button" aria-pressed="false">Pausar animaciones</button>
 </div>
 
 <header class="hero">
@@ -435,12 +449,27 @@ const STORE = "trono_resenas_v1";
 const $ = s => document.querySelector(s);
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 
+/* Preferencia del sistema + pausa manual persistente. No afecta al sonido. */
+const motionQuery=window.matchMedia("(prefers-reduced-motion: reduce)");
+let motionPaused=false;
+try{motionPaused=localStorage.getItem("trono_motion_paused")==="true"}catch(e){}
+const reduceMotion=()=>motionQuery.matches||motionPaused;
+const motionToggle=$("#motionToggle");
+function paintMotion(){
+  const reduced=reduceMotion();
+  document.documentElement.classList.toggle("motion-reduced",reduced);
+  motionToggle.setAttribute("aria-pressed",String(reduced));
+  motionToggle.disabled=motionQuery.matches;
+  motionToggle.textContent=motionQuery.matches?"Movimiento reducido (sistema)":motionPaused?"Reanudar animaciones":"Pausar animaciones";
+}
+paintMotion();
+
 /* ===================== MUELLE REAL (resorte amortiguado) ===================== */
 class Spring{
   constructor(x=0,k=260,c=14){this.x=x;this.v=0;this.t=x;this.k=k;this.c=c;this.on=null}
-  kick(v){this.v+=v;Spring.run(this)}
+  kick(v){if(reduceMotion())return;this.v+=v;Spring.run(this)}
   to(t){this.t=t;Spring.run(this)}
-  static run(s){ if(!s._r){ s._r=true; Spring.list.add(s); if(!Spring.raf) Spring.raf=requestAnimationFrame(Spring.tick)} }
+  static run(s){ if(reduceMotion()){s.x=s.t;s.v=0;s.on&&s.on(s.x,0);return} if(!s._r){ s._r=true; Spring.list.add(s); if(!Spring.raf) Spring.raf=requestAnimationFrame(Spring.tick)} }
   static tick(now){
     const dt=Math.min(.032,(now-(Spring.last||now))/1000||.016); Spring.last=now;
     const sub=4,h=dt/sub;
@@ -453,6 +482,21 @@ class Spring{
   }
 }
 Spring.list=new Set();
+function updateMotion(){
+  paintMotion();
+  if(reduceMotion()){
+    cancelAnimationFrame(Spring.raf);Spring.raf=0;Spring.last=0;
+    for(const s of Spring.list){s.x=s.t;s.v=0;s._r=false;s.on&&s.on(s.x,0)}
+    Spring.list.clear();
+  }
+  syncCloudMotion();
+}
+motionToggle.addEventListener("click",()=>{
+  motionPaused=!motionPaused;
+  try{localStorage.setItem("trono_motion_paused",String(motionPaused))}catch(e){}
+  updateMotion();
+});
+motionQuery.addEventListener("change",updateMotion);
 /* squash & stretch: d>0 estira en vertical, d<0 aplasta */
 const squash=(el,d,ty=0,rot=0)=>{el.style.transform=`translateY(${ty}px) rotate(${rot}deg) scale(${1-d*.55},${1+d})`};
 
@@ -679,17 +723,7 @@ flush.addEventListener("click",()=>{
   if(Date.now()-last<30000){ $("#err").textContent="Calma, que la cadena tarda en recargarse. Espera unos segundos."; fsp.kick(-14); busy=false; return; }
   if($("#web").value){ toast("¡Reseña publicada! Gracias por tu servicio."); busy=false; return; }
   const rev={nick:nick.slice(0,24),color:COLORS[Math.floor(Math.random()*COLORS.length)],msg:$("#msg").value.trim().slice(0,280),...vals,stink:+$("#stinkR").value};
-  const sw=$("#swirl"), g=$("#swirlG"); sw.style.display="grid";
-  const rot=new Spring(0,40,7), sc=new Spring(0,120,14); // rot en vueltas, sc escala
-  let rotv=0;
-  const t0=performance.now();
-  (function spin(now){
-    const t=(now-t0)/1000; const rr=t*t*1100;
-    const s=clamp(1-Math.pow(clamp((t-.35)/.8,0,1),2),0,1); // se va por el desagüe
-    g.setAttribute("transform",`rotate(${rr}) scale(${s})`);
-    sw.style.background=`rgba(14,90,88,${.55*Math.sin(clamp(t/1.2,0,1)*Math.PI)})`;
-    if(t<1.25) requestAnimationFrame(spin); else { sw.style.display="none"; done(); }
-  })(t0);
+  const sw=$("#swirl"), g=$("#swirlG");
   const sent=(async()=>{
     try{
       const {data:ins,error:e1}=await sb.from("reviews").insert(rev).select("id").single();
@@ -705,6 +739,20 @@ flush.addEventListener("click",()=>{
       return {ok:true};
     }catch(err){ return {ok:false}; }
   })();
+  if(reduceMotion()){
+    done();
+  }else{
+    sw.style.display="grid";
+    const t0=performance.now();
+    (function spin(now){
+      if(reduceMotion()){sw.style.display="none";done();return}
+      const t=(now-t0)/1000, rr=t*t*1100;
+      const s=clamp(1-Math.pow(clamp((t-.35)/.8,0,1),2),0,1);
+      g.setAttribute("transform",`rotate(${rr}) scale(${s})`);
+      sw.style.background=`rgba(14,90,88,${.55*Math.sin(clamp(t/1.2,0,1)*Math.PI)})`;
+      if(t<1.25) requestAnimationFrame(spin); else {sw.style.display="none";done()}
+    })(t0);
+  }
   async function done(){
     const out=await sent;
     if(!out.ok){
@@ -719,7 +767,7 @@ flush.addEventListener("click",()=>{
     Object.keys(vals).forEach(k=>vals[k]=0); buildCats(); stinkTouched=false; $("#stinkR").value=5; $("#stinkLv").textContent="Sin tocar. Mueve el control."; $("#msg").value=""; $("#nick").value="";
     picked.forEach(p=>URL.revokeObjectURL(p.url)); picked.length=0; renderPicked();
     toast("¡Reseña publicada! Gracias por tu servicio."); busy=false;
-    $("#reviews").scrollIntoView({behavior:"smooth",block:"start"});
+    $("#reviews").scrollIntoView({behavior:reduceMotion()?"instant":"smooth",block:"start"});
   }
 });
 const toast=m=>{const t=$("#toast");t.textContent=m;const sp=new Spring(0,260,15);sp.on=x=>{t.style.opacity=clamp(x,0,1);t.style.transform=`translate(-50%,${(1-x)*40}px) scale(${1+(x-1)*.4},${1-(x-1)*.4})`};sp.to(1);setTimeout(()=>sp.to(0),2600)};
@@ -756,7 +804,8 @@ for(let i=0;i<7;i++){
   sv.innerHTML='<path d="M17 68 C4 56 30 46 17 34 C4 22 30 14 17 2" fill="none" stroke="#9fb23c" stroke-width="5" stroke-linecap="round"/>';
   cloudbox.appendChild(sv); clouds.push({el:sv,ph:Math.random()*6,sp:.35+Math.random()*.4,x:8+i*13+Math.random()*4});
 }
-(function loop(now){
+let cloudRaf=0;
+function cloudLoop(now){
   const lv=clamp(cloudLevel.x,0,1.2), t=now/1000;
   clouds.forEach(c=>{
     const p=((t*c.sp+c.ph)%1);
@@ -764,8 +813,15 @@ for(let i=0;i<7;i++){
     const sx=1+Math.sin(t*3+c.ph)*.18, sy=.6+p*.7;
     c.el.style.transform=`translateY(${-p*40}px) scale(${sx},${sy})`;
   });
-  requestAnimationFrame(loop);
-})(0);
+  cloudRaf=requestAnimationFrame(cloudLoop);
+}
+function syncCloudMotion(){
+  cancelAnimationFrame(cloudRaf);cloudRaf=0;
+  if(reduceMotion()){
+    clouds.forEach(c=>{c.el.style.left=c.x+"%";c.el.style.opacity="0"});
+  }else{cloudRaf=requestAnimationFrame(cloudLoop)}
+}
+syncCloudMotion();
 /* control de olor en el formulario */
 let stinkTouched=false;
 const LV=["Olía a casa de abuela","Casi nada, la verdad","Un poquito de aroma","Se notaba, pero bien","Olor a baño normal","Ya se nota desde el pasillo","Me lloraban los ojos","La pintura se levantaba","Perdí el sentido del olfato","Vi pasar mi vida","Llamé a los bomberos"];
@@ -832,7 +888,7 @@ function mkPlayer(){
 })();
 /* la primera vez que toca algo, arranca (los navegadores no dejan sonar antes) */
 function firstTap(e){
-  if(e.target.closest&&e.target.closest("#radio")){ window.removeEventListener("pointerdown",firstTap,true); return; }
+  if(e.target.closest&&e.target.closest("#radio, #motionToggle")){ window.removeEventListener("pointerdown",firstTap,true); return; }
   window.removeEventListener("pointerdown",firstTap,true);
   if(radio.state==="idle"&&!radio.err){ turnOn(); toast("Radio del baño encendida (a volumen bajito)."); }
 }
