@@ -697,7 +697,7 @@ flush.addEventListener("click",()=>{
       for(let i=0;i<picked.length;i++){
         let pf; try{ pf=await prep(picked[i].file); }catch(err){ return {ok:false,reviewDone:true,msg:"big"}; }
         const path=ins.id+"/"+i+"."+pf.ext;
-        const {error:e2}=await sb.storage.from("review-photos").upload(path,pf.blob,{contentType:pf.blob.type||"image/jpeg"});
+        const {error:e2}=await sb.storage.from("review-photos").upload(path,pf.blob,{contentType:pf.blob.type||"image/jpeg",cacheControl:"300"});
         if(e2) return {ok:false,reviewDone:true,msg:e2.message};
         const {error:e3}=await sb.from("review_photos").insert({review_id:ins.id,path,position:i});
         if(e3) return {ok:false,reviewDone:true,msg:e3.message};
