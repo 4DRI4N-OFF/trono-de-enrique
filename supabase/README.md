@@ -80,8 +80,11 @@ lleva comentada la línea para mantener solo el envío.
 ## Moderación (como hasta ahora)
 
 Ocultar una reseña: dashboard > Table Editor > `reviews` > poner `approved` en
-falso. Desaparece de la web junto con sus fotos. Para borrar del todo: borrar la
-fila y, en Storage > `review-photos`, borrar la carpeta de esa reseña.
+falso. Desaparece de la web y sus fotos dejan de servirse. Matiz medido en
+pruebas: si un miembro acababa de descargar una foto, la caché del storage puede
+seguir sirviéndosela a él (nunca a anónimos ni ajenos) hasta ~5 minutos; para
+retirada inmediata, borrar además la carpeta de esa reseña en Storage >
+`review-photos`. Para borrar del todo: borrar la fila y esa carpeta.
 
 ## Mudanza futura de hosting
 
