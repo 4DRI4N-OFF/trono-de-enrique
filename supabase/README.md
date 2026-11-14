@@ -56,26 +56,21 @@ SQL con datos sintéticos y comprobar de verdad contra la API y el storage:
 Solo con eso en verde se toca el proyecto real. Esta fase necesita luz verde de
 Adrián (crea un proyecto en su cuenta) y usuarios de prueba sintéticos.
 
-## Decisión pendiente: formulario para visitas
+## Formulario: solo miembros
 
-Hoy cualquiera puede publicar una reseña sin cuenta y sale directamente (la
-moderación es después, quitando `approved` desde el dashboard). Con la zona
-privada hay dos opciones — a decidir por Adrián:
-
-- **Mantener el formulario público**: las visitas siguen escribiendo, pero sus
-  reseñas solo las verá el grupo (ya no salen en público).
-- **Cerrar el formulario a miembros**: solo escribe quien tiene cuenta.
-
-El paso 2 del SQL está escrito para cerrarlo todo; lleva comentada la línea para
-mantener el formulario de visitas si se elige eso.
+Como las reseñas son privadas del grupo, escribirlas también pasa a ser cosa de
+miembros: el paso 2 del SQL cierra el envío anónimo. Si algún día se quiere
+reabrir un buzón para visitas (sus reseñas solo las vería el grupo), el paso 2
+lleva comentada la línea para mantener solo el envío.
 
 ## Cómo queda protegido
 
 - Leer reseñas: solo miembros (política con `es_del_grupo()`).
 - Publicar: solo miembros; la reseña nace aprobada y ligada a su autor.
 - Fotos: bucket privado `review-photos`. Solo miembros las ven y se descargan con
-  la sesión activa: **no hay URL compartible** (nada de enlaces firmados que
-  cualquiera pueda reenviar). Solo el autor sube fotos a su reseña (máx. 5, también
+  la sesión activa: **no hay URL pública directa** que se pueda reenviar. Ojo:
+  un miembro siempre puede guardar y reenviar lo que ve; la protección es
+  frente a terceros, no frente al propio grupo. Solo el autor sube fotos a su reseña (máx. 5, también
   verificado en servidor) y solo él puede borrarlas. Si una reseña se oculta
   (`approved=false`), sus fotos también dejan de servirse.
 - La lista de correos no se puede leer desde la web por nadie.
