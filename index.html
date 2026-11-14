@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>El Trono de Enrique · Reseñas del baño</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.min.js"></script>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.min.js" integrity="sha384-gnyZit14c5lnGcarmA166QQjjJXpucw25ogZXuwH3HxxY904zHkBqmxVpelsPorb" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 :root{
   --tile:#f4efe2; --grout:#d8cfb8; --ink:#1e1b16; --teal:#0e5a58; --teal2:#14807c;
@@ -280,15 +281,8 @@ body.locked .lockalt{display:block}
 <section id="gate">
   <div class="card gate-card">
     <h3>Zona del grupo</h3>
-    <p class="body-txt">Las reseñas del baño son patrimonio del grupo. Entra con tu cuenta o créate una: si no estás en la lista, la Dirección (Adrián) tiene que apuntarte.</p>
-    <div class="gate-tabs" role="group" aria-label="Entrar o crear cuenta">
-      <button class="gtab" id="tabIn" type="button" aria-pressed="true">Entrar</button>
-      <button class="gtab" id="tabUp" type="button" aria-pressed="false">Crear cuenta</button>
-    </div>
-    <div class="field" id="fNick" hidden><label for="gNick">Tu mote</label><input id="gNick" type="text" maxlength="24" autocomplete="nickname" placeholder="El de siempre"></div>
-    <div class="field"><label for="gMail">Correo</label><input id="gMail" type="email" autocomplete="email" placeholder="tucorreo@ejemplo.com"></div>
-    <div class="field"><label for="gPass">Contraseña</label><input id="gPass" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"></div>
-    <button class="gbtn" id="gGo" type="button">Entrar</button>
+    <p class="body-txt">Las reseñas del baño son patrimonio del grupo. Entra con tu cuenta de Google: si no estás en la lista, la Dirección (Adrián) tiene que apuntarte.</p>
+    <button class="gbtn" id="gGo" type="button">Entrar con Google</button>
     <div class="gerr body-txt" id="gateErr" role="alert"></div>
     <p class="gnote body-txt">Sin spam y sin cosas raras: la cuenta solo sirve para ver y dejar reseñas.</p>
   </div>
@@ -601,34 +595,14 @@ function renderReviews(newest){
 
 /* ===================== CUENTAS (zona del grupo) ===================== */
 let session=null, member=false;
-let authMode="in";
-const tabIn=$("#tabIn"), tabUp=$("#tabUp"), fNick=$("#fNick"), gGo=$("#gGo"), gErr=$("#gateErr");
-function setMode(m){
-  authMode=m; tabIn.setAttribute("aria-pressed",m==="in"); tabUp.setAttribute("aria-pressed",m==="up");
-  fNick.hidden=(m==="in"); gGo.textContent=m==="in"?"Entrar":"Crear cuenta"; gErr.textContent="";
-  $("#gPass").setAttribute("autocomplete",m==="in"?"current-password":"new-password");
-}
-tabIn.addEventListener("click",()=>setMode("in"));
-tabUp.addEventListener("click",()=>setMode("up"));
+const gGo=$("#gGo"), gErr=$("#gateErr");
 gGo.addEventListener("click",async()=>{
-  const email=$("#gMail").value.trim(), pass=$("#gPass").value;
-  if(!email||!pass){ gErr.textContent="Falta el correo o la contraseña."; return; }
-  gGo.disabled=true;
+  gGo.disabled=true; gErr.textContent="";
   try{
-    if(authMode==="in"){
-      const {error}=await sb.auth.signInWithPassword({email,password:pass});
-      if(error) gErr.textContent="No entra. Revisa el correo y la contraseña.";
-    }else{
-      if(pass.length<6){ gErr.textContent="La contraseña necesita al menos 6 caracteres."; gGo.disabled=false; return; }
-      const nick=$("#gNick").value.trim();
-      const {data,error}=await sb.auth.signUp({email,password:pass,options:{data:{nick:nick||email.split("@")[0]}}});
-      if(error) gErr.textContent=/already|registered/i.test(error.message||"")?"Ese correo ya tiene cuenta. Prueba a entrar.":"No se pudo crear la cuenta. Prueba otra vez.";
-      else if(!data.session) gErr.textContent="Cuenta creada. Revisa tu correo: hay que confirmarla antes de entrar.";
-    }
-  }catch(e){ gErr.textContent="Fallo de conexión. Prueba otra vez."; }
-  gGo.disabled=false;
+    const {error}=await sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+location.pathname}});
+    if(error){ gErr.textContent="No se pudo abrir el acceso con Google. Prueba otra vez."; gGo.disabled=false; }
+  }catch(e){ gErr.textContent="Fallo de conexión. Prueba otra vez."; gGo.disabled=false; }
 });
-["#gMail","#gPass","#gNick"].forEach(sel=>$(sel).addEventListener("keydown",e=>{if(e.key==="Enter")gGo.click()}));
 $("#gOut").addEventListener("click",async()=>{ await sb.auth.signOut(); });
 async function refreshGate(){
   const {data}=await sb.auth.getSession(); session=data?data.session:null;
